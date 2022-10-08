@@ -11,6 +11,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import re
 from bs4 import BeautifulSoup
+import distance
+from fuzzywuzzy import fuzz
 
 # data import
 df = pd.read_csv('train.csv')
@@ -331,6 +333,148 @@ plt.legend()
 plt.show()
 # --------------------------------------------------
 
+
+# --------------------------------------------------
+# advanced features
+from nltk.corpus import stopwords
+
+def fetch_token_features(row):
+    q1 = row['question1']
+    q2 = row['question2']
+    
+    token_features = [0.0]*8
+    SAFE_DIV = 0.0001
+    STOP_WORDS = stopwords.words("english")
+    
+    # converting the sentence into tokens
+    q1_tokens = q1.split()
+    q2_tokens = q2.split()
+    
+    if len(q1_tokens) == 0 or len(q2_tokens) == 0:
+        return token_features
+    
+    # get the non-stopwords in questions
+    q1_words = set([word for word in q1_tokens if word not in STOP_WORDS])
+    q2_words = set([word for word in q2_tokens if word not in STOP_WORDS])
+
+    # get the stopwords in questions
+    q1_stops = set([word for word in q1_tokens if word in STOP_WORDS])
+    q2_stops = set([word for word in q2_tokens if word in STOP_WORDS])
+    
+    # get the common non-stopwords from question pair
+    common_word_count = len(q1_words.intersection(q2_words))
+    
+    # get the common stopwords from question pair
+    common_stop_count = len(q1_stops.intersection(q2_stops))
+    
+    # get the common tokens from question pair
+    common_token_count = len(set(q1_tokens).intersection(set(q2_tokens)))
+    
+    # min max
+    token_features[0] = common_word_count / (min(len(q1_words), len(q2_words)) + SAFE_DIV)
+    token_features[1] = common_word_count / (max(len(q1_words), len(q2_words)) + SAFE_DIV)
+    token_features[2] = common_stop_count / (min(len(q1_stops), len(q2_stops)) + SAFE_DIV)
+    token_features[3] = common_stop_count / (max(len(q1_stops), len(q2_stops)) + SAFE_DIV)
+    token_features[4] = common_token_count / (min(len(q1_tokens), len(q2_tokens)) + SAFE_DIV)
+    token_features[5] = common_token_count / (max(len(q1_tokens), len(q2_tokens)) + SAFE_DIV)
+    
+    # last word of both question is same or not
+    token_features[6] = int(q1_tokens[-1] == q2_tokens[-1])
+    
+    # first word of both question is same or not
+    token_features[7] = int(q1_tokens[0] == q2_tokens[0])
+    
+    return token_features
+    
+
+# applying token features
+df_new['cwc_min'] = list(map(lambda x: x[0], token_features))
+df_new['cwc_max'] = list(map(lambda x: x[1], token_features))
+df_new['csc_min'] = list(map(lambda x: x[2], token_features))
+df_new['csc_max'] = list(map(lambda x: x[3], token_features))
+df_new['ctc_min'] = list(map(lambda x: x[4], token_features))
+df_new['ctc_max'] = list(map(lambda x: x[5], token_features))
+df_new['last_word_eq'] = list(map(lambda x: x[6], token_features))
+df_new['first_word_eq'] = list(map(lambda x: x[7], token_features))
+
+
+def fetch_length_features(row):
+    q1 = row['question1']
+    q2 = row['question2']
+    
+    length_features = [0.0]*3
+    
+    # converting the sentence into tokens
+    q1_tokens = q1.split()
+    q2_tokens = q2.split()
+    
+    if len(q1_tokens) == 0 or len(q2_tokens) == 0:
+        return length_features
+    
+    # absolute length features
+    length_features[0] = abs(len(q1_tokens) - len(q2_tokens))
+    
+    # average token length of both questions
+    length_features[1] = (len(q1_tokens) + len(q2_tokens)) / 2
+    
+    strs = list(distance.lcsubstrings(q1, q2))
+    length_features[2] = len(strs[0]) / (min(len(q1), len(q2)) + 1)
+    
+    return length_features
+    
+    
+
+
+# applying length features
+length_features = df_new.apply(fetch_length_features, axis = 1)
+
+df_new['abs_len_diff'] = list(map(lambda x: x[0], length_features))
+df_new['mean_len'] = list(map(lambda x: x[1], length_features))
+df_new['longest_substr_ratio'] = list(map(lambda x: x[2], length_features))
+
+
+
+
+    
+    
+    
+def fetch_fuzzy_features(row):
+    q1 = row['question1']
+    q2 = row['question2']
+    
+    fuzzy_features = [0.0]*4
+    
+    # fuzzy ratio
+    fuzzy_features[0] = fuzz.QRatio(q1, q2)
+    
+    # fuzzy partial ratio
+    fuzzy_features[1] = fuzz.partial_ratio(q1, q2)
+    
+    # token sort ratio
+    fuzzy_features[2] = fuzz.token_sort_ratio(q1, q2)
+    
+    # token set ratio
+    fuzzy_features[3] = fuzz.token_set_ratio(q1, q2)
+    
+    return fuzzy_features
+
+
+
+# applying fuzzy features
+fuzzy_features = df_new.apply(fetch_fuzzy_features, axis = 1)
+
+df_new['fuzz_ratio'] = list(map(lambda x: x[0], fuzzy_features))
+df_new['fuzz_partial_ratio'] = list(map(lambda x: x[1], fuzzy_features))
+df_new['token_sort_ratio'] = list(map(lambda x: x[2], fuzzy_features))
+df_new['token_set_ratio'] = list(map(lambda x: x[3], fuzzy_features))
+
+
+    
+    
+    
+    
+    
+    
 
 # --------------------------------------------------
 ques_df = df_new[['question1', 'question2']]
