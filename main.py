@@ -4,6 +4,7 @@ Created on Wed Aug 17 21:59:49 2022
 
 @author: VAGUE
 """
+
 # libraries
 import numpy as np
 import pandas as pd
@@ -12,7 +13,6 @@ import matplotlib.pyplot as plt
 import re
 from bs4 import BeautifulSoup
 import distance
-from fuzzywuzzy import fuzz
 
 # data import
 df = pd.read_csv('train.csv')
@@ -60,7 +60,7 @@ plt.show()
 
 # --------------------------------------------------
 # sample dataset
-df_new = df.sample(30000, random_state=0)
+df_new = df.sample(10000, random_state=0)
 
 # distribution of duplicate and non-duplicate questions
 print('')
@@ -102,9 +102,9 @@ def preprocess(q):
     q = q.replace(',000,000,000 ', 'b ')
     q = q.replace(',000,000 ', 'm ')
     q = q.replace(',000 ', 'k ')
-    q = q.replace(r'([0-9]+)000000000', r'\1b', q)
-    q = q.replace(r'([0-9]+)000000', r'\1m', q)
-    q = q.replace(r'([0-9]+)000', r'\1k', q)
+    q = re.sub(r'([0-9]+)000000000', r'\1b', q)
+    q = re.sub(r'([0-9]+)000000', r'\1m', q)
+    q = re.sub(r'([0-9]+)000', r'\1k', q)
     
     # decontracting words
     # https://en.wikipedia.org/wiki/Wikipedia%3aList_of_English_contractions
@@ -337,6 +337,8 @@ plt.show()
 # --------------------------------------------------
 # advanced features
 from nltk.corpus import stopwords
+import nltk
+nltk.download('stopwords')
 
 def fetch_token_features(row):
     q1 = row['question1']
@@ -388,6 +390,8 @@ def fetch_token_features(row):
     
 
 # applying token features
+token_features = df_new.apply(fetch_token_features, axis = 1)
+
 df_new['cwc_min'] = list(map(lambda x: x[0], token_features))
 df_new['cwc_max'] = list(map(lambda x: x[1], token_features))
 df_new['csc_min'] = list(map(lambda x: x[2], token_features))
@@ -396,6 +400,10 @@ df_new['ctc_min'] = list(map(lambda x: x[4], token_features))
 df_new['ctc_max'] = list(map(lambda x: x[5], token_features))
 df_new['last_word_eq'] = list(map(lambda x: x[6], token_features))
 df_new['first_word_eq'] = list(map(lambda x: x[7], token_features))
+
+
+
+
 
 
 def fetch_length_features(row):
@@ -437,7 +445,7 @@ df_new['longest_substr_ratio'] = list(map(lambda x: x[2], length_features))
 
     
     
-    
+from fuzzywuzzy import fuzz    
 def fetch_fuzzy_features(row):
     q1 = row['question1']
     q2 = row['question2']
@@ -472,6 +480,52 @@ df_new['token_set_ratio'] = list(map(lambda x: x[3], fuzzy_features))
     
     
     
+
+# --------------------------------------------------
+# differentiation plots between various advanced features
+sns.pairplot(df_new[['ctc_min', 'cwc_min', 'csc_min', 'is_duplicate']], hue = 'is_duplicate')
+sns.pairplot(df_new[['ctc_max', 'cwc_max', 'csc_max', 'is_duplicate']], hue = 'is_duplicate')
+sns.pairplot(df_new[['last_word_eq', 'first_word_eq', 'is_duplicate']], hue = 'is_duplicate')
+sns.pairplot(df_new[['mean_len', 'abs_len_diff', 'longest_substr_ratio', 'is_duplicate']], hue = 'is_duplicate')
+sns.pairplot(df_new[['fuzz_ratio', 'fuzz_partial_ratio', 'token_sort_ratio', 'token_set_ratio', 'is_duplicate']], hue = 'is_duplicate')
+# --------------------------------------------------
+
+
+
+
+# --------------------------------------------------
+# t-distributed stochastic neighbour embedding t-SNE
+# dimensionality reduction for 15 features to 3 features
+from sklearn.preprocessing import MinMaxScaler
+x = MinMaxScaler().fit_transform(df_new[['cwc_min', 'cwc_max', 'csc_min', 'csc_max', 'ctc_min', 'ctc_max', 'last_word_eq', 'first_word_eq', 'mean_len', 'abs_len_diff', 'longest_substr_ratio', 'fuzz_ratio', 'fuzz_partial_ratio', 'token_sort_ratio', 'token_set_ratio']])
+y = df_new['is_duplicate'].values
+
+
+from sklearn.manifold import TSNE
+tsne2d = TSNE(
+    n_components = 2,
+    init = 'random', #pca
+    random_state = 101,
+    method = 'barnes_hut',
+    n_iter = 1000,
+    verbose = 2,
+    angle = 0.5
+).fit_transform(x)
+
+
+# plot for t-SNE
+df_new['tsne2d_one'] = tsne2d[:,0]
+df_new['tsne2d_two'] = tsne2d[:,1]
+
+sns.scatterplot(
+    x = 'tsne2d_one', y = 'tsne2d_two',
+    hue = y,
+    data = df_new,
+    legend = 'full',
+    alpha = 0.3
+)
+
+
     
     
     
