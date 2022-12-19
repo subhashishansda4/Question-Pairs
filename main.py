@@ -340,6 +340,14 @@ from nltk.corpus import stopwords
 import nltk
 nltk.download('stopwords')
 
+# mean length
+
+
+# absolute length difference
+
+
+# longest substring ratio
+# token features
 def fetch_token_features(row):
     q1 = row['question1']
     q2 = row['question2']
@@ -373,11 +381,23 @@ def fetch_token_features(row):
     common_token_count = len(set(q1_tokens).intersection(set(q2_tokens)))
     
     # min max
+    # cwc min
+    # (num of common words) / min(words in q1,q2)
     token_features[0] = common_word_count / (min(len(q1_words), len(q2_words)) + SAFE_DIV)
+    # cwc max
+    # (num of common words) / max(words in q1,q2)
     token_features[1] = common_word_count / (max(len(q1_words), len(q2_words)) + SAFE_DIV)
+    # csc min
+    # (num of common stop words) / min(stop words in q1,q2)
     token_features[2] = common_stop_count / (min(len(q1_stops), len(q2_stops)) + SAFE_DIV)
+    # csc max
+    # (num of common stop words) / max(stop words in q1,q2)
     token_features[3] = common_stop_count / (max(len(q1_stops), len(q2_stops)) + SAFE_DIV)
+    # ctc min
+    # (num of common tokens) / min(tokens in q1,q2)
     token_features[4] = common_token_count / (min(len(q1_tokens), len(q2_tokens)) + SAFE_DIV)
+    # ctc max
+    # (num of common tokens) / max(tokens in q1,q2)
     token_features[5] = common_token_count / (max(len(q1_tokens), len(q2_tokens)) + SAFE_DIV)
     
     # last word of both question is same or not
@@ -405,7 +425,7 @@ df_new['first_word_eq'] = list(map(lambda x: x[7], token_features))
 
 
 
-
+# length based features
 def fetch_length_features(row):
     q1 = row['question1']
     q2 = row['question2']
@@ -419,12 +439,13 @@ def fetch_length_features(row):
     if len(q1_tokens) == 0 or len(q2_tokens) == 0:
         return length_features
     
-    # absolute length features
+    # absolute length difference
     length_features[0] = abs(len(q1_tokens) - len(q2_tokens))
     
     # average token length of both questions
     length_features[1] = (len(q1_tokens) + len(q2_tokens)) / 2
     
+    # longest substring ratio
     strs = list(distance.lcsubstrings(q1, q2))
     length_features[2] = len(strs[0]) / (min(len(q1), len(q2)) + 1)
     
@@ -572,6 +593,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from xgboost import XGBClassifier
 
+print("")
 # STOCHASTIC GRADIENT DESCENT CLASSIFIER
 sgdc_cls = SGDClassifier()
 sgdc_cls.fit(x_train, y_train)
@@ -579,7 +601,7 @@ sgdc_cls.fit(x_train, y_train)
 y_pred1 = sgdc_cls.predict(x_test)
 # accuracy score
 as1 = metrics.accuracy_score(y_test, y_pred1)
-print(as1)
+print("stochastic gradient descent classifier", as1)
 print('')
 
 # DECISION TREE CLASSIFIER
@@ -589,7 +611,7 @@ dt_cls.fit(x_train, y_train)
 y_pred2 = dt_cls.predict(x_test)
 # accuracy score
 as2 = metrics.accuracy_score(y_test, y_pred2)
-print(as2)
+print("decision tree classifier", as2)
 print('')
 
 # RANDOM FOREST CLASSIFIER
@@ -599,7 +621,7 @@ rf_cls.fit(x_train, y_train)
 y_pred3 = rf_cls.predict(x_test)
 # accuracy score
 as3 = metrics.accuracy_score(y_test, y_pred3)
-print(as3)
+print("random forest classifier", as3)
 print('')
 
 # K-NEAREST NEIGHBOUR
@@ -610,7 +632,7 @@ knn_cls.fit(x_train, y_train)
 y_pred4 = knn_cls.predict(x_test)
 # accuracy score
 as4 = metrics.accuracy_score(y_test, y_pred4)
-print(as4)
+print("k-nearest neighbour", as4)
 print('')
 
 # SUPPORT VECTOR CLASSIFIER
@@ -620,7 +642,7 @@ sv_cls.fit(x_train, y_train)
 y_pred5 = sv_cls.predict(x_test)
 # accuracy score
 as5 = metrics.accuracy_score(y_test, y_pred5)
-print(as5)
+print("support vector classifier", as5)
 print('')
 
 # XGBOOST CLASSIFIER
@@ -630,7 +652,7 @@ xgb_cls.fit(x_train, y_train)
 y_pred6 = xgb_cls.predict(x_test)
 # accuracy score
 as6 = metrics.accuracy_score(y_test, y_pred6)
-print(as6)
+print("xgboost classifier", as6)
 print('')
 
 # scores
@@ -643,49 +665,15 @@ bar.plot(kind='bar')
 # --------------------------------------------------
 
 
+
 # --------------------------------------------------
-# adding more features
-# cwc min
-# (num of common words) / min(words in q1,q2)
-
-
-# cwc max
-# (num of common words) / max(words in q1,q2)
-
-
-# csc min
-# (num of common stop words) / min(stop words in q1,q2)
-
-
-# csc max
-# (num of common stop words) / max(stop words in q1,q2)
-
-
-# ctc min
-# (num of common tokens) / min(tokens in q1,q2)
-
-
-# ctc max
-# (num of common tokens) / max(tokens in q1,q2)
-
-
-# last word eq
-
-
-# first word eq
-
-
-
-
-# mean length
-
-
-# absolute length difference
-
-
-# longest substring ratio
-
-
+# confusion matrix
+# for random forest
+print(metrics.confusion_matrix(y_test, y_pred3))
+print("")
+# for xgboost model
+print(metrics.confusion_matrix(y_test, y_pred6))
+# --------------------------------------------------
 
 
 
