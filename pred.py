@@ -62,12 +62,17 @@ def query_point_creator(q1, q2):
 
 
 
-q1 = 'Where is the capital of India?'
-q2 = 'What is the current capital of India?'
+q1 = 'Is this the shit?'
+q2 = 'Is this Shit?'
 
 # Random Forest
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
 
 rf_cls = RandomForestClassifier()
-pred = rf_cls.predict(query_point_creator(q1, q2))
-print(pred)
+pred1 = rf_cls.predict(query_point_creator(q1, q2))
+print(pred1)
+
+svc_cls = SVC()
+pred2 = svc_cls.predict(query_point_creator(q1, q2))
+print(pred2)
