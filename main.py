@@ -12,6 +12,9 @@ import seaborn as sns
 
 import matplotlib.pyplot as plt
 import plotly.express as px
+import plotly.io as pio
+pio.renderers.default="browser"
+'''pio.renderers.default="svg"'''
 
 import re
 from bs4 import BeautifulSoup
@@ -63,7 +66,7 @@ plt.show()
 
 # --------------------------------------------------
 # sample dataset
-df_new = df.sample(10000, random_state=0)
+df_new = df.sample(25000, random_state=0)
 
 # distribution of duplicate and non-duplicate questions
 print('')
@@ -88,7 +91,15 @@ plt.show()
 
 # --------------------------------------------------
 # data preprocessing
-# stemming
+# lemmatization and speech tagging
+import spacy
+nlp = spacy.load("en_core_web_sm")
+
+def tls(sen):
+    doc = nlp(sen)
+    speech = [token.lemma_ for token in doc]
+    return speech
+
 def preprocess(q):
     q = str(q).lower().strip()
     
@@ -246,12 +257,17 @@ def preprocess(q):
     q = q.replace("'ll", " will")
     
     # removing html tags
-    q = BeautifulSoup(q)
+    q = BeautifulSoup(q, features="html.parser")
     q = q.get_text()
     
     # remove punctuations
     pattern = re.compile('\W')
     q = re.sub(pattern, ' ', q).strip()
+    
+    # using tls
+    words = tls(q)
+    q = ' '.join(words)
+    
     
     return q
 
@@ -344,13 +360,6 @@ import nltk
 from nltk.corpus import stopwords
 nltk.download('stopwords')
 
-# mean length
-
-
-# absolute length difference
-
-
-# longest substring ratio
 # token features
 def fetch_token_features(row):
     q1 = row['question1']
@@ -539,9 +548,8 @@ tsne3d = TSNE(
 
 
 # 2d plot for t-SNE
-df_new['tsne3d_one'] = tsne3d[:,0]
-df_new['tsne3d_two'] = tsne3d[:,1]
-df_new['tsne3d_three'] = tsne3d[:,2]
+'''df_new['tsne2d_one'] = tsne2d[:,0]
+df_new['tsne2d_two'] = tsne2d[:,1]'''
 
 '''sns.scatterplot(
     x = 'tsne2d_one', y = 'tsne2d_two',
@@ -551,8 +559,15 @@ df_new['tsne3d_three'] = tsne3d[:,2]
     alpha = 0.3
 )'''
 
+# 3d plot for t-SNE
+tsne3d_one = tsne3d[:,0]
+tsne3d_two = tsne3d[:,1]
+tsne3d_three = tsne3d[:,2]
+
 px.scatter_3d(
-    x = 'tsne3d_one', y = 'tsne3d_two', z = 'tsne3d_three'
+    df_new,
+    x = tsne3d_one, y = tsne3d_two, z = tsne3d_three,
+    color=('is_duplicate')
 )
 
 
@@ -576,7 +591,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 questions = list(ques_df['question1']) + list(ques_df['question2'])
 
 '''cv = CountVectorizer(max_features=3000)'''
-tf_idf = TfidfVectorizer(max_features=1000)
+tf_idf = TfidfVectorizer(max_features=3000)
 
 q1_arr, q2_arr = np.vsplit(tf_idf.fit_transform(questions).toarray(), 2)
 
@@ -606,6 +621,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from xgboost import XGBClassifier
+from sklearn.naive_bayes import GaussianNB
 
 print("")
 # STOCHASTIC GRADIENT DESCENT CLASSIFIER
@@ -669,6 +685,16 @@ as6 = metrics.accuracy_score(y_test, y_pred6)
 print("xgboost classifier", as6)
 print('')
 
+# NAIVE BAIYES CLASSIFIER
+nb_cls = GaussianNB()
+nb_cls.fit(x_train, y_train)
+# predicting using test set
+y_pred7 = nb_cls.predict(x_test)
+# accuracy score
+as7 = metrics.accuracy_score(y_test, y_pred7)
+print("naive bayes classifier", as7)
+print('')
+
 # scores
 models = ['SGDC', 'DTC', 'RFC', 'KNN', 'SVC', 'XGBC']
 as_values = [as1, as2, as3, as4, as5, as6]
@@ -683,21 +709,24 @@ bar.plot(kind='bar')
 # --------------------------------------------------
 # confusion matrix
 # for random forest
+print("confusion matrix")
+print("random forest")
 print(metrics.confusion_matrix(y_test, y_pred3))
 print("")
 # for xgboost model
+print("xgboost")
 print(metrics.confusion_matrix(y_test, y_pred6))
 print("")
 # for support vector classifier
+print("support vector")
 print(metrics.confusion_matrix(y_test, y_pred5))
 print("")
 # --------------------------------------------------
 
 
 
-
-
-
+# hyper-parameter tuning for random forest
+# cross validation
 
 
 
