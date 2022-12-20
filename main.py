@@ -9,7 +9,10 @@ Created on Wed Aug 17 21:59:49 2022
 import numpy as np
 import pandas as pd
 import seaborn as sns
+
 import matplotlib.pyplot as plt
+import plotly.express as px
+
 import re
 from bs4 import BeautifulSoup
 import distance
@@ -85,6 +88,7 @@ plt.show()
 
 # --------------------------------------------------
 # data preprocessing
+# stemming
 def preprocess(q):
     q = str(q).lower().strip()
     
@@ -336,8 +340,8 @@ plt.show()
 
 # --------------------------------------------------
 # advanced features
-from nltk.corpus import stopwords
 import nltk
+from nltk.corpus import stopwords
 nltk.download('stopwords')
 
 # mean length
@@ -523,8 +527,8 @@ y = df_new['is_duplicate'].values
 
 
 from sklearn.manifold import TSNE
-tsne2d = TSNE(
-    n_components = 2,
+tsne3d = TSNE(
+    n_components = 3,
     init = 'random', #pca
     random_state = 101,
     method = 'barnes_hut',
@@ -534,17 +538,23 @@ tsne2d = TSNE(
 ).fit_transform(x)
 
 
-# plot for t-SNE
-df_new['tsne2d_one'] = tsne2d[:,0]
-df_new['tsne2d_two'] = tsne2d[:,1]
+# 2d plot for t-SNE
+df_new['tsne3d_one'] = tsne3d[:,0]
+df_new['tsne3d_two'] = tsne3d[:,1]
+df_new['tsne3d_three'] = tsne3d[:,2]
 
-sns.scatterplot(
+'''sns.scatterplot(
     x = 'tsne2d_one', y = 'tsne2d_two',
     hue = y,
     data = df_new,
     legend = 'full',
     alpha = 0.3
+)'''
+
+px.scatter_3d(
+    x = 'tsne3d_one', y = 'tsne3d_two', z = 'tsne3d_three'
 )
+
 
 
     
@@ -559,12 +569,16 @@ final_df = df_new.drop(columns=['id', 'qid1', 'qid2', 'question1', 'question2'])
 
 # --------------------------------------------------
 # bag of words
-from sklearn.feature_extraction.text import CountVectorizer
+'''from sklearn.feature_extraction.text import CountVectorizer'''
+# tf-idf
+from sklearn.feature_extraction.text import TfidfVectorizer
 # merge texts
 questions = list(ques_df['question1']) + list(ques_df['question2'])
 
-cv = CountVectorizer(max_features=3000)
-q1_arr, q2_arr = np.vsplit(cv.fit_transform(questions).toarray(), 2)
+'''cv = CountVectorizer(max_features=3000)'''
+tf_idf = TfidfVectorizer(max_features=1000)
+
+q1_arr, q2_arr = np.vsplit(tf_idf.fit_transform(questions).toarray(), 2)
 
 # converting to dataframe and concatenating
 temp_df1 = pd.DataFrame(q1_arr, index = ques_df.index)
@@ -673,6 +687,10 @@ print(metrics.confusion_matrix(y_test, y_pred3))
 print("")
 # for xgboost model
 print(metrics.confusion_matrix(y_test, y_pred6))
+print("")
+# for support vector classifier
+print(metrics.confusion_matrix(y_test, y_pred5))
+print("")
 # --------------------------------------------------
 
 
