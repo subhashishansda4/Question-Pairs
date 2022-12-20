@@ -6,8 +6,10 @@ Created on Mon Dec 19 20:59:01 2022
 """
 
 import numpy as np
-from sklearn.feature_extraction.text import CountVectorizer
-cv = CountVectorizer(max_features=3000)
+'''from sklearn.feature_extraction.text import CountVectorizer
+cv = CountVectorizer(max_features=3000)'''
+from sklearn.feature_extraction.text import TfidfVectorizer
+tf_idf = TfidfVectorizer(max_features=1000)
 
 from main import preprocess
 from main import common_words
@@ -49,10 +51,10 @@ def query_point_creator(q1, q2):
     
 
     # bow feature for q1
-    q1_bow = cv.transform([q1]).toarray()
+    q1_bow = tf_idf.transform([q1]).toarray()
     
     # bow feature for q2
-    q2_bow = cv.transform([q2]).toarray()
+    q2_bow = tf_idf.transform([q2]).toarray()
     
     return np.hstack((np.array(input_query).reshape(1,22), q1_bow, q2_bow))
 
