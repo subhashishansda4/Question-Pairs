@@ -95,13 +95,20 @@ plt.show()
 import spacy
 nlp = spacy.load("en_core_web_sm")
 
+# token lemmatized speech
 def tls(sen):
     doc = nlp(sen)
     speech = [token.lemma_ for token in doc]
     return speech
 
+from words import sym
+
 def preprocess(q):
     q = str(q).lower().strip()
+    
+    for i in range(len(sym)):
+        words = [word.replace(sym[i], "") for word in words]
+    q = ' '.join(words)
     
     # replace certain special characters with their string equivalents
     q = q.replace('%', ' percent ')
@@ -583,16 +590,41 @@ final_df = df_new.drop(columns=['id', 'qid1', 'qid2', 'question1', 'question2'])
 
 
 # --------------------------------------------------
-# bag of words
+# vectorization of words
 '''from sklearn.feature_extraction.text import CountVectorizer'''
-# tf-idf
 from sklearn.feature_extraction.text import TfidfVectorizer
 # merge texts
 questions = list(ques_df['question1']) + list(ques_df['question2'])
 
+# implementing word2vec
+from gensim.models import Word2Vec
+from words import words
+
+keys=[]
+index=[]
+values=[]
+tokens = [words]
+
+model = Word2Vec(tokens, vector_size=100, window=5, min_count=1, workers=4)
+model.build_vocab(tokens)
+
+model.train(tokens, total_examples=len(questions), epochs=10)
+
+for i in range(0, 2466):
+    keys.append(model.wv.index_to_key[i])
+    index.append(model.wv.key_to_index[keys[i]])
+    values.append(model.wv[keys[i]])
+
+dic = {"keys":keys, "index":index, "vectors":values}
+
+'''value = model.wv.index_to_key[2465]
+print(value)'''
+
+# vectorizer model
 '''cv = CountVectorizer(max_features=3000)'''
 tf_idf = TfidfVectorizer(max_features=3000)
 
+values = [str(value) for value in values]
 q1_arr, q2_arr = np.vsplit(tf_idf.fit_transform(questions).toarray(), 2)
 
 # converting to dataframe and concatenating
