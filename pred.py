@@ -76,3 +76,51 @@ print(pred1)
 svc_cls = SVC()
 pred2 = svc_cls.predict(query_point_creator(q1, q2))
 print(pred2)
+
+
+# ---------------------------------------------------------------
+
+
+from gensim.models import Word2Vec
+from sklearn.feature_extraction.text import TfidfVectorizer
+from words import words
+
+tokens = [words]
+
+model = Word2Vec(tokens, vector_size=100, window=5, min_count=1, workers=4)
+model.build_vocab(tokens)
+
+model.train(tokens, total_examples=len(tokens), epochs=10)
+print(len(tokens))
+
+
+keys=[]
+index=[]
+values=[]
+
+for i in range(0, 2466):
+    keys.append(model.wv.index_to_key[i])
+    index.append(model.wv.key_to_index[keys[i]])
+    values.append(model.wv[keys[i]])
+    
+
+
+dic = {"keys":keys, "index":index, "vectors":values}
+
+
+
+'''value = model.wv.index_to_key[2465]
+print(value)'''
+
+
+
+vectorizer = TfidfVectorizer()
+
+
+
+
+values = [str(value) for value in values]
+tfidf_matrix = vectorizer.fit_transform(values)
+
+print(tfidf_matrix.shape)
+print(tfidf_matrix.toarray())
