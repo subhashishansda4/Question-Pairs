@@ -66,7 +66,7 @@ plt.show()
 
 # --------------------------------------------------
 # sample dataset
-df_new = df.sample(25000, random_state=0)
+df_new = df.sample(5000, random_state=0)
 
 # distribution of duplicate and non-duplicate questions
 print('')
@@ -104,11 +104,11 @@ def tls(sen):
 from words import sym
 
 def preprocess(q):
-    q = str(q).lower().strip()
+    #q = str(q).lower().strip()
     
     for i in range(len(sym)):
-        words = [word.replace(sym[i], "") for word in words]
-    q = ' '.join(words)
+        words_ = [word.replace(sym[i], "") for word in q]
+    q = ''.join(words_)
     
     # replace certain special characters with their string equivalents
     q = q.replace('%', ' percent ')
@@ -272,8 +272,8 @@ def preprocess(q):
     q = re.sub(pattern, ' ', q).strip()
     
     # using tls
-    words = tls(q)
-    q = ' '.join(words)
+    words__ = tls(q)
+    q = ' '.join(words__)
     
     
     return q
@@ -591,6 +591,8 @@ final_df = df_new.drop(columns=['id', 'qid1', 'qid2', 'question1', 'question2'])
 
 # --------------------------------------------------
 # vectorization of words
+from words import words
+
 '''from sklearn.feature_extraction.text import CountVectorizer'''
 from sklearn.feature_extraction.text import TfidfVectorizer
 # merge texts
@@ -598,7 +600,7 @@ questions = list(ques_df['question1']) + list(ques_df['question2'])
 
 # implementing word2vec
 from gensim.models import Word2Vec
-from words import words
+'''from words import words'''
 
 keys=[]
 index=[]
@@ -622,7 +624,7 @@ print(value)'''
 
 # vectorizer model
 '''cv = CountVectorizer(max_features=3000)'''
-tf_idf = TfidfVectorizer(max_features=3000)
+tf_idf = TfidfVectorizer()
 
 values = [str(value) for value in values]
 q1_arr, q2_arr = np.vsplit(tf_idf.fit_transform(questions).toarray(), 2)
