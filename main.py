@@ -66,7 +66,7 @@ plt.show()
 
 # --------------------------------------------------
 # sample dataset
-df_new = df.sample(500, random_state=0)
+df_new = df.sample(100, random_state=0)
 
 # distribution of duplicate and non-duplicate questions
 print('')
@@ -102,6 +102,7 @@ def tls(sen):
     return speech
 
 from words import sym
+from words import contractions
 
 def preprocess(q):
     #q = str(q).lower().strip()
@@ -127,129 +128,6 @@ def preprocess(q):
     q = re.sub(r'([0-9]+)000000000', r'\1b', q)
     q = re.sub(r'([0-9]+)000000', r'\1m', q)
     q = re.sub(r'([0-9]+)000', r'\1k', q)
-    
-    # decontracting words
-    # https://en.wikipedia.org/wiki/Wikipedia%3aList_of_English_contractions
-    # https://stackoverflow.com/a/19794953
-    contractions = { 
-        "ain't": "am not / are not / is not / has not / have not",
-        "aren't": "are not / am not",
-        "can't": "cannot",
-        "can't've": "cannot have",
-        "'cause": "because",
-        "could've": "could have",
-        "couldn't": "could not",
-        "couldn't've": "could not have",
-        "didn't": "did not",
-        "doesn't": "does not",
-        "don't": "do not",
-        "hadn't": "had not",
-        "hadn't've": "had not have",
-        "hasn't": "has not",
-        "haven't": "have not",
-        "he'd": "he had / he would",
-        "he'd've": "he would have",
-        "he'll": "he shall / he will",
-        "he'll've": "he shall have / he will have",
-        "he's": "he has / he is",
-        "how'd": "how did",
-        "how'd'y": "how do you",
-        "how'll": "how will",
-        "how's": "how has / how is / how does",
-        "I'd": "I had / I would",
-        "I'd've": "I would have",
-        "I'll": "I shall / I will",
-        "I'll've": "I shall have / I will have",
-        "I'm": "I am",
-        "I've": "I have",
-        "isn't": "is not",
-        "it'd": "it had / it would",
-        "it'd've": "it would have",
-        "it'll": "it shall / it will",
-        "it'll've": "it shall have / it will have",
-        "it's": "it has / it is",
-        "let's": "let us",
-        "ma'am": "madam",
-        "mayn't": "may not",
-        "might've": "might have",
-        "mightn't": "might not",
-        "mightn't've": "might not have",
-        "must've": "must have",
-        "mustn't": "must not",
-        "mustn't've": "must not have",
-        "needn't": "need not",
-        "needn't've": "need not have",
-        "o'clock": "of the clock",
-        "oughtn't": "ought not",
-        "oughtn't've": "ought not have",
-        "shan't": "shall not",
-        "sha'n't": "shall not",
-        "shan't've": "shall not have",
-        "she'd": "she had / she would",
-        "she'd've": "she would have",
-        "she'll": "she shall / she will",
-        "she'll've": "she shall have / she will have",
-        "she's": "she has / she is",
-        "should've": "should have",
-        "shouldn't": "should not",
-        "shouldn't've": "should not have",
-        "so've": "so have",
-        "so's": "so as / so is",
-        "that'd": "that would / that had",
-        "that'd've": "that would have",
-        "that's": "that has / that is",
-        "there'd": "there had / there would",
-        "there'd've": "there would have",
-        "there's": "there has / there is",
-        "they'd": "they had / they would",
-        "they'd've": "they would have",
-        "they'll": "they shall / they will",
-        "they'll've": "they shall have / they will have",
-        "they're": "they are",
-        "they've": "they have",
-        "to've": "to have",
-        "wasn't": "was not",
-        "we'd": "we had / we would",
-        "we'd've": "we would have",
-        "we'll": "we will",
-        "we'll've": "we will have",
-        "we're": "we are",
-        "we've": "we have",
-        "weren't": "were not",
-        "what'll": "what shall / what will",
-        "what'll've": "what shall have / what will have",
-        "what're": "what are",
-        "what's": "what has / what is",
-        "what've": "what have",
-        "when's": "when has / when is",
-        "when've": "when have",
-        "where'd": "where did",
-        "where's": "where has / where is",
-        "where've": "where have",
-        "who'll": "who shall / who will",
-        "who'll've": "who shall have / who will have",
-        "who's": "who has / who is",
-        "who've": "who have",
-        "why's": "why has / why is",
-        "why've": "why have",
-        "will've": "will have",
-        "won't": "will not",
-        "won't've": "will not have",
-        "would've": "would have",
-        "wouldn't": "would not",
-        "wouldn't've": "would not have",
-        "y'all": "you all",
-        "y'all'd": "you all would",
-        "y'all'd've": "you all would have",
-        "y'all're": "you all are",
-        "y'all've": "you all have",
-        "you'd": "you had / you would",
-        "you'd've": "you would have",
-        "you'll": "you shall / you will",
-        "you'll've": "you shall have / you will have",
-        "you're": "you are",
-        "you've": "you have"
-    }
     
     q_decontracted = []
     for word in q.split():
@@ -427,7 +305,6 @@ def fetch_token_features(row):
     token_features[7] = int(q1_tokens[0] == q2_tokens[0])
     
     return token_features
-    
 
 # applying token features
 token_features = df_new.apply(fetch_token_features, axis = 1)
@@ -440,8 +317,6 @@ df_new['ctc_min'] = list(map(lambda x: x[4], token_features))
 df_new['ctc_max'] = list(map(lambda x: x[5], token_features))
 df_new['last_word_eq'] = list(map(lambda x: x[6], token_features))
 df_new['first_word_eq'] = list(map(lambda x: x[7], token_features))
-
-
 
 
 
@@ -471,9 +346,6 @@ def fetch_length_features(row):
     
     return length_features
     
-    
-
-
 # applying length features
 length_features = df_new.apply(fetch_length_features, axis = 1)
 
@@ -483,9 +355,6 @@ df_new['longest_substr_ratio'] = list(map(lambda x: x[2], length_features))
 
 
 
-
-    
-    
 from fuzzywuzzy import fuzz    
 def fetch_fuzzy_features(row):
     q1 = row['question1']
@@ -507,8 +376,6 @@ def fetch_fuzzy_features(row):
     
     return fuzzy_features
 
-
-
 # applying fuzzy features
 fuzzy_features = df_new.apply(fetch_fuzzy_features, axis = 1)
 
@@ -518,9 +385,6 @@ df_new['token_sort_ratio'] = list(map(lambda x: x[2], fuzzy_features))
 df_new['token_set_ratio'] = list(map(lambda x: x[3], fuzzy_features))
 
 
-    
-    
-    
 
 # --------------------------------------------------
 # differentiation plots between various advanced features
@@ -530,7 +394,6 @@ sns.pairplot(df_new[['last_word_eq', 'first_word_eq', 'is_duplicate']], hue = 'i
 sns.pairplot(df_new[['mean_len', 'abs_len_diff', 'longest_substr_ratio', 'is_duplicate']], hue = 'is_duplicate')
 sns.pairplot(df_new[['fuzz_ratio', 'fuzz_partial_ratio', 'token_sort_ratio', 'token_set_ratio', 'is_duplicate']], hue = 'is_duplicate')
 # --------------------------------------------------
-
 
 
 
@@ -578,15 +441,11 @@ px.scatter_3d(
 )
 
 
-
-    
-    
-    
-
 # --------------------------------------------------
 ques_df = df_new[['question1', 'question2']]
 final_df = df_new.drop(columns=['id', 'qid1', 'qid2', 'question1', 'question2'])
 # --------------------------------------------------
+
 
 
 # --------------------------------------------------
@@ -640,11 +499,18 @@ final_df = pd.concat([final_df, temp_df], axis=1)
 # ---------------------------------------------------
 
 
+
 # ---------------------------------------------------
 # train test split
 from sklearn.model_selection import train_test_split
 x_train, x_test, y_train, y_test = train_test_split(final_df.iloc[:,0:-1].values,
                                                     final_df.iloc[:,-1].values, test_size=0.3, random_state=0)
+
+'''# sentiment analysis
+from sklearn.preprocessing import LabelEncoder
+label = LabelEncoder()
+y_train = label.fit_transform(y_train)
+y_test = label.fit_transform(y_test)'''
 
 
 from sklearn.model_selection import KFold
@@ -674,51 +540,47 @@ models = [sgdc, dt, rf, knn, svc, xgb, nb]
 
 # hyperparameter grid
 param_grid = {
-    "sgdc_cls__loss": [0.1, 1, 10, 100],
-    "sgdc_cls__penalty": ['linear', 'poly', 'rbf', 'sigmoid'],
-    "sgdc_cls__alpha": [2, 3, 4, 5],
-    "sgdc_cls__l1_ratio": ['scale', 'auto'],
-    "sgdc_cls__fit_intercept": [True, False],
-    "sgdc_cls__max_iter": [1000, 2000, 5000],
-    "sgdc_cls__tol": [1e-3, 1e-4, 1e-5],
+    "sgdc__loss": [0.1, 1, 10, 100],
+    "sgdc__penalty": ['linear', 'poly', 'rbf', 'sigmoid'],
+    "sgdc__alpha": [2, 3, 4, 5],
+    "sgdc__l1_ratio": ['scale', 'auto'],
+    "sgdc__fit_intercept": [True, False],
+    "sgdc__max_iter": [1000, 2000, 5000],
+    "sgdc__tol": [1e-3, 1e-4, 1e-5],
     
-    "dt_cls__criterion": ['gini', 'entropy'],
-    "dt_cls__splitter": ['best', 'random'],
-    "dt_cls__max_depth": [None, 5, 10, 20],
-    "dt_cls__min_samples_split": [2, 5, 10],
-    "dt_cls__min_samples_leaf": [1, 2, 4],
+    "dt__criterion": ['gini', 'entropy'],
+    "dt__splitter": ['best', 'random'],
+    "dt__max_depth": [None, 5, 10, 20],
+    "dt__min_samples_split": [2, 5, 10],
+    "dt__min_samples_leaf": [1, 2, 4],
     
-    "rf_cls__n_estimators": [10, 50, 100, 200],
-    "rf_cls__criterion": ['gini', 'entropy'],
-    "rf_cls__min_samples_split": [2, 5, 10],
-    "rf_cls__min_samples_leaf": [1, 2, 4],
-    "rf_cls__min_weight_fraction_leaf": [0, 0.1, 0.2],
-    "rf_cls__max_leaf_nodes": [None, 10, 20, 30],
-    "rf_cls__max_depth": [None, 5, 10],
+    "rf__n_estimators": [10, 50, 100, 200],
+    "rf__criterion": ['gini', 'entropy'],
+    "rf__min_samples_split": [2, 5, 10],
+    "rf__min_samples_leaf": [1, 2, 4],
+    "rf__min_weight_fraction_leaf": [0, 0.1, 0.2],
+    "rf__max_leaf_nodes": [None, 10, 20, 30],
+    "rf__max_depth": [None, 5, 10],
     
-    "knn_cls__n_neighbours": [3, 5, 7, 9],
-    "knn_cls__weights": ['uniform', 'distance'],
-    "knn_cls__algorithm": ['auto', 'ball_tree', 'kd_tree', 'brute'],
+    "knn__n_neighbours": [3, 5, 7, 9],
+    "knn__weights": ['uniform', 'distance'],
+    "knn__algorithm": ['auto', 'ball_tree', 'kd_tree', 'brute'],
     
-    "sv_cls__C": [0.1, 1, 10, 100],
-    "sv_cls__kernel": ['linear', 'poly', 'rbf', 'sigmoid'],
-    "sv_cls__degree": [2, 3, 4, 5],
-    "sv_cls__gamma": ['scale', 'auto'],
+    "svc__C": [0.1, 1, 10, 100],
+    "svc__kernel": ['linear', 'poly', 'rbf', 'sigmoid'],
+    "svc__degree": [2, 3, 4, 5],
+    "svc__gamma": ['scale', 'auto'],
     
-    "xgb_cls__max_depth": [3, 5, 7, 9],
-    "xgb_cls__learning_rate": [0.1, 0.2, 0.3],
-    "xgb_cls__n_estimators": [100, 200, 300],
-    "xgb_cls__gamma": [0, 0.5, 1],
-    "xgb_cls__subsample": [0.5, 0.8, 1.0],
-    "xgb_cls__colsample_bytree": [0.5, 0.8, 1.0],
-    "xgb_cls__reg_alpha": [0, 0.5, 1],
+    "xgb__max_depth": [3, 5, 7, 9],
+    "xgb__learning_rate": [0.1, 0.2, 0.3],
+    "xgb__n_estimators": [100, 200, 300],
+    "xgb__gamma": [0, 0.5, 1],
+    "xgb__subsample": [0.5, 0.8, 1.0],
+    "xgb__colsample_bytree": [0.5, 0.8, 1.0],
+    "xgb__reg_alpha": [0, 0.5, 1],
     
-    "nb_cls__var_smoothing": [1e-9, 1e-8, 1e-7, 1e-6],
-    
-    "lr_cls__penalty": ['l1', 'l2'],
-    "lr_cls__solver": ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']
+    "nb__var_smoothing": [1e-9, 1e-8, 1e-7, 1e-6],
 }
-param_grid={}
 
 
 # cross-validating training dataset
@@ -726,27 +588,17 @@ param_grid={}
 kfold = KFold(n_splits=5, shuffle=True, random_state=0)
 
 
-def combined(scorer_1, scorer_2):
-    return 0.5*scorer_1 + 0.5*scorer_2
-
-
-
-
-
-grid.fit(x_train, y_train)
-print(grid.score(x_test, y_test))
-
 # validation on testing data
 def cross_val_test():
     scores = []
     for model in models:
         for train, test in kfold.split(x_train):
-            
+            #grid search object
             grid = GridSearchCV(
                 model,
                 param_grid,
                 cv=kfold,
-                scoring=['accuracy'], refit='accuracy',
+                scoring='accuracy', refit='accuracy',
             )
             
             grid.fit(x_train[train], y_train[train])
@@ -754,22 +606,44 @@ def cross_val_test():
             scores.append(score)
         print("cv_score : {:.2f} +/- {:.2f}".format(np.mean(scores), np.std(scores)))
         print(grid.best_params_)
+        print("")
     print(grid.best_estimator_)
-    print("")
 
-print("----TEST----")
+print("")
 cross_val_test()
 # --------------------------------------------------
 
 
+
+# --------------------------------------------------
 # selected model
-rf.fit(x_train, y_train)
-y_pred = rf.predict(x_test)
+param_grid = {
+    "n_estimators": [10, 50, 100, 200],
+    "criterion": ['gini', 'entropy'],
+    "min_samples_split": [2, 5, 10],
+    "min_samples_leaf": [1, 2, 4],
+    "min_weight_fraction_leaf": [0, 0.1, 0.2],
+    "max_leaf_nodes": [None, 10, 20, 30],
+    "max_depth": [None, 5, 10]
+}
+
+grid = GridSearchCV(
+    rf,
+    param_grid,
+    cv=kfold,
+    scoring='accuracy', refit='accuracy'
+)
+
+grid.fit(x_train, y_train)
+y_pred = grid.predict(x_test)
+scr = grid.score(x_test, y_test)
 acc = metrics.accuracy_score(y_test, y_pred)
 log = metrics.log_loss(y_test, y_pred)
 mtrx = metrics.confusion_matrix(y_test, y_pred)
+print("score : {:.2f}".format(np.mean(scr)))
 print("accuracy : {:.2f} +/- {:.2f}".format(np.mean(acc), np.std(acc)))
 print("logloss : {:.2f}".format(np.mean(log)))
 print("confusion matrix")
 print(mtrx)
 print("")
+print(grid.best_params_)
