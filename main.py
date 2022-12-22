@@ -66,7 +66,7 @@ plt.show()
 
 # --------------------------------------------------
 # sample dataset
-df_new = df.sample(100, random_state=0)
+df_new = df.sample(5000, random_state=0)
 
 # distribution of duplicate and non-duplicate questions
 print('')
@@ -504,7 +504,7 @@ final_df = pd.concat([final_df, temp_df], axis=1)
 # train test split
 from sklearn.model_selection import train_test_split
 x_train, x_test, y_train, y_test = train_test_split(final_df.iloc[:,0:-1].values,
-                                                    final_df.iloc[:,-1].values, test_size=0.3, random_state=0)
+                                                    final_df.iloc[:,-1].values, test_size=0.5, random_state=0)
 
 '''# sentiment analysis
 from sklearn.preprocessing import LabelEncoder
@@ -581,6 +581,7 @@ param_grid = {
     
     "nb__var_smoothing": [1e-9, 1e-8, 1e-7, 1e-6],
 }
+param_grid = {}
 
 
 # cross-validating training dataset
@@ -618,13 +619,7 @@ cross_val_test()
 # --------------------------------------------------
 # selected model
 param_grid = {
-    "n_estimators": [10, 50, 100, 200],
-    "criterion": ['gini', 'entropy'],
-    "min_samples_split": [2, 5, 10],
-    "min_samples_leaf": [1, 2, 4],
-    "min_weight_fraction_leaf": [0, 0.1, 0.2],
-    "max_leaf_nodes": [None, 10, 20, 30],
-    "max_depth": [None, 5, 10]
+    "n_estimators": [68, 69, 70, 71, 72],
 }
 
 grid = GridSearchCV(
@@ -633,6 +628,20 @@ grid = GridSearchCV(
     cv=kfold,
     scoring='accuracy', refit='accuracy'
 )
+
+grid.fit(x_test, y_test)
+y_pred = grid.predict(x_train)
+scr = grid.score(x_train, y_train)
+acc = metrics.accuracy_score(y_train, y_pred)
+log = metrics.log_loss(y_train, y_pred)
+mtrx = metrics.confusion_matrix(y_train, y_pred)
+print("score : {:.2f}".format(np.mean(scr)))
+print("accuracy : {:.2f} +/- {:.2f}".format(np.mean(acc), np.std(acc)))
+print("logloss : {:.2f}".format(np.mean(log)))
+print("confusion matrix")
+print(mtrx)
+print("")
+print(grid.best_params_)
 
 grid.fit(x_train, y_train)
 y_pred = grid.predict(x_test)
