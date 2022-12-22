@@ -589,8 +589,8 @@ param_grid = {}
 kfold = KFold(n_splits=5, shuffle=True, random_state=0)
 
 
-# validation on testing data
-def cross_val_test():
+# validation on training data
+def cross_val_train():
     scores = []
     for model in models:
         for train, test in kfold.split(x_train):
@@ -604,6 +604,30 @@ def cross_val_test():
             
             grid.fit(x_train[train], y_train[train])
             score = grid.score(x_train[test], y_train[test])
+            scores.append(score)
+        print("cv_score : {:.2f} +/- {:.2f}".format(np.mean(scores), np.std(scores)))
+        print(grid.best_params_)
+        print("")
+    print(grid.best_estimator_)
+
+print("")
+cross_val_train()
+
+# validation on testing data
+def cross_val_test():
+    scores = []
+    for model in models:
+        for train, test in kfold.split(x_test):
+            #grid search object
+            grid = GridSearchCV(
+                model,
+                param_grid,
+                cv=kfold,
+                scoring='accuracy', refit='accuracy',
+            )
+            
+            grid.fit(x_test[train], y_test[train])
+            score = grid.score(x_test[test], y_test[test])
             scores.append(score)
         print("cv_score : {:.2f} +/- {:.2f}".format(np.mean(scores), np.std(scores)))
         print(grid.best_params_)
