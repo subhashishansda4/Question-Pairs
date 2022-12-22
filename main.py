@@ -66,7 +66,7 @@ plt.show()
 
 # --------------------------------------------------
 # sample dataset
-df_new = df.sample(5000, random_state=0)
+df_new = df.sample(500, random_state=0)
 
 # distribution of duplicate and non-duplicate questions
 print('')
@@ -643,11 +643,12 @@ final_df = pd.concat([final_df, temp_df], axis=1)
 # ---------------------------------------------------
 # train test split
 from sklearn.model_selection import train_test_split
-x_train, x_test, y_train, y_test = train_test_split(temp_df.iloc[:,0:-1].values,
-                                                    temp_df.iloc[:,-1].values, test_size=0.2, random_state=0)
+x_train, x_test, y_train, y_test = train_test_split(final_df.iloc[:,0:-1].values,
+                                                    final_df.iloc[:,-1].values, test_size=0.3, random_state=0)
 
 
-# accuracy score
+from sklearn.model_selection import KFold
+
 from sklearn import metrics
 from sklearn.linear_model import SGDClassifier
 from sklearn.tree import DecisionTreeClassifier
@@ -657,110 +658,118 @@ from sklearn.svm import SVC
 from xgboost import XGBClassifier
 from sklearn.naive_bayes import GaussianNB
 
-print("")
-# STOCHASTIC GRADIENT DESCENT CLASSIFIER
-sgdc_cls = SGDClassifier()
-sgdc_cls.fit(x_train, y_train)
-# predicting using test set
-y_pred1 = sgdc_cls.predict(x_test)
-# accuracy score
-as1 = metrics.accuracy_score(y_test, y_pred1)
-print("stochastic gradient descent classifier", as1)
-print('')
+from sklearn.model_selection import GridSearchCV
 
-# DECISION TREE CLASSIFIER
-dt_cls = DecisionTreeClassifier()
-dt_cls.fit(x_train, y_train)
-# predicting using test set
-y_pred2 = dt_cls.predict(x_test)
-# accuracy score
-as2 = metrics.accuracy_score(y_test, y_pred2)
-print("decision tree classifier", as2)
-print('')
-
-# RANDOM FOREST CLASSIFIER
-rf_cls = RandomForestClassifier()
-rf_cls.fit(x_train, y_train)
-# predicting using test set
-y_pred3 = rf_cls.predict(x_test)
-# accuracy score
-as3 = metrics.accuracy_score(y_test, y_pred3)
-print("random forest classifier", as3)
-print('')
-
-# K-NEAREST NEIGHBOUR
 n = 5
-knn_cls = KNeighborsClassifier(n)
-knn_cls.fit(x_train, y_train)
-# predicting using test set
-y_pred4 = knn_cls.predict(x_test)
-# accuracy score
-as4 = metrics.accuracy_score(y_test, y_pred4)
-print("k-nearest neighbour", as4)
-print('')
+# models  
+sgdc = SGDClassifier()
+dt = DecisionTreeClassifier()
+rf = RandomForestClassifier()
+knn = KNeighborsClassifier(n)
+svc = SVC(kernel='rbf')
+xgb = XGBClassifier()
+nb = GaussianNB()
+models = [sgdc, dt, rf, knn, svc, xgb, nb]
 
-# SUPPORT VECTOR CLASSIFIER
-sv_cls = SVC(kernel='rbf')
-sv_cls.fit(x_train, y_train)
-# predicting using test set
-y_pred5 = sv_cls.predict(x_test)
-# accuracy score
-as5 = metrics.accuracy_score(y_test, y_pred5)
-print("support vector classifier", as5)
-print('')
 
-# XGBOOST CLASSIFIER
-xgb_cls = XGBClassifier()
-xgb_cls.fit(x_train, y_train)
-# predicting using test set
-y_pred6 = xgb_cls.predict(x_test)
-# accuracy score
-as6 = metrics.accuracy_score(y_test, y_pred6)
-print("xgboost classifier", as6)
-print('')
+# hyperparameter grid
+param_grid = {
+    "sgdc_cls__loss": [0.1, 1, 10, 100],
+    "sgdc_cls__penalty": ['linear', 'poly', 'rbf', 'sigmoid'],
+    "sgdc_cls__alpha": [2, 3, 4, 5],
+    "sgdc_cls__l1_ratio": ['scale', 'auto'],
+    "sgdc_cls__fit_intercept": [True, False],
+    "sgdc_cls__max_iter": [1000, 2000, 5000],
+    "sgdc_cls__tol": [1e-3, 1e-4, 1e-5],
+    
+    "dt_cls__criterion": ['gini', 'entropy'],
+    "dt_cls__splitter": ['best', 'random'],
+    "dt_cls__max_depth": [None, 5, 10, 20],
+    "dt_cls__min_samples_split": [2, 5, 10],
+    "dt_cls__min_samples_leaf": [1, 2, 4],
+    
+    "rf_cls__n_estimators": [10, 50, 100, 200],
+    "rf_cls__criterion": ['gini', 'entropy'],
+    "rf_cls__min_samples_split": [2, 5, 10],
+    "rf_cls__min_samples_leaf": [1, 2, 4],
+    "rf_cls__min_weight_fraction_leaf": [0, 0.1, 0.2],
+    "rf_cls__max_leaf_nodes": [None, 10, 20, 30],
+    "rf_cls__max_depth": [None, 5, 10],
+    
+    "knn_cls__n_neighbours": [3, 5, 7, 9],
+    "knn_cls__weights": ['uniform', 'distance'],
+    "knn_cls__algorithm": ['auto', 'ball_tree', 'kd_tree', 'brute'],
+    
+    "sv_cls__C": [0.1, 1, 10, 100],
+    "sv_cls__kernel": ['linear', 'poly', 'rbf', 'sigmoid'],
+    "sv_cls__degree": [2, 3, 4, 5],
+    "sv_cls__gamma": ['scale', 'auto'],
+    
+    "xgb_cls__max_depth": [3, 5, 7, 9],
+    "xgb_cls__learning_rate": [0.1, 0.2, 0.3],
+    "xgb_cls__n_estimators": [100, 200, 300],
+    "xgb_cls__gamma": [0, 0.5, 1],
+    "xgb_cls__subsample": [0.5, 0.8, 1.0],
+    "xgb_cls__colsample_bytree": [0.5, 0.8, 1.0],
+    "xgb_cls__reg_alpha": [0, 0.5, 1],
+    
+    "nb_cls__var_smoothing": [1e-9, 1e-8, 1e-7, 1e-6],
+    
+    "lr_cls__penalty": ['l1', 'l2'],
+    "lr_cls__solver": ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']
+}
+param_grid={}
 
-# NAIVE BAIYES CLASSIFIER
-nb_cls = GaussianNB()
-nb_cls.fit(x_train, y_train)
-# predicting using test set
-y_pred7 = nb_cls.predict(x_test)
-# accuracy score
-as7 = metrics.accuracy_score(y_test, y_pred7)
-print("naive bayes classifier", as7)
-print('')
 
-# scores
-models = ['SGDC', 'DTC', 'RFC', 'KNN', 'SVC', 'XGBC']
-as_values = [as1, as2, as3, as4, as5, as6]
+# cross-validating training dataset
+'''scores = cross_val_score(pipeline, x_train, y_train, cv=5)'''
+kfold = KFold(n_splits=5, shuffle=True, random_state=0)
 
-col = {'Accuracy Values':as_values}
-bar = pd.DataFrame(data=col, index=models)
-bar.plot(kind='bar')
+
+def combined(scorer_1, scorer_2):
+    return 0.5*scorer_1 + 0.5*scorer_2
+
+
+
+
+
+grid.fit(x_train, y_train)
+print(grid.score(x_test, y_test))
+
+# validation on testing data
+def cross_val_test():
+    scores = []
+    for model in models:
+        for train, test in kfold.split(x_train):
+            
+            grid = GridSearchCV(
+                model,
+                param_grid,
+                cv=kfold,
+                scoring=['accuracy'], refit='accuracy',
+            )
+            
+            grid.fit(x_train[train], y_train[train])
+            score = grid.score(x_train[test], y_train[test])
+            scores.append(score)
+        print("cv_score : {:.2f} +/- {:.2f}".format(np.mean(scores), np.std(scores)))
+        print(grid.best_params_)
+    print(grid.best_estimator_)
+    print("")
+
+print("----TEST----")
+cross_val_test()
 # --------------------------------------------------
 
 
-
-# --------------------------------------------------
-# confusion matrix
-# for random forest
+# selected model
+rf.fit(x_train, y_train)
+y_pred = rf.predict(x_test)
+acc = metrics.accuracy_score(y_test, y_pred)
+log = metrics.log_loss(y_test, y_pred)
+mtrx = metrics.confusion_matrix(y_test, y_pred)
+print("accuracy : {:.2f} +/- {:.2f}".format(np.mean(acc), np.std(acc)))
+print("logloss : {:.2f}".format(np.mean(log)))
 print("confusion matrix")
-print("random forest")
-print(metrics.confusion_matrix(y_test, y_pred3))
+print(mtrx)
 print("")
-# for xgboost model
-print("xgboost")
-print(metrics.confusion_matrix(y_test, y_pred6))
-print("")
-# for support vector classifier
-print("support vector")
-print(metrics.confusion_matrix(y_test, y_pred5))
-print("")
-# --------------------------------------------------
-
-
-
-# hyper-parameter tuning for random forest
-# cross validation
-
-
-
