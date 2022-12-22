@@ -124,3 +124,48 @@ tfidf_matrix = vectorizer.fit_transform(values)
 
 print(tfidf_matrix.shape)
 print(tfidf_matrix.toarray())
+
+
+# ----------------------------------------------------------------
+
+
+import gensim
+from gensim.utils import simple_preprocess
+from sklearn.pipeline import Pipeline
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+
+# List of sentences to train on
+sentences = ['This is a sentence', 'This is another sentence']
+
+# Create a pipeline with the following steps:
+# 1. Tokenize the sentences using gensim's simple_preprocess function
+# 2. Train a word2vec model using the tokens
+# 3. Vectorize the words using the trained model
+# 4. Train a random forest classifier using the vectors as features
+pipeline = Pipeline([
+    ('tokenize', gensim.utils.simple_preprocess),
+    ('train', gensim.models.Word2Vec(vector_size=100, window=5, min_count=1)),
+    ('vectorize', lambda x: x.wv[x.wv.vocab]),
+    ('classify', RandomForestClassifier())
+])
+
+# Define a set of hyperparameters to tune
+param_grid = {
+    'train__size': [50, 100, 200],
+    'train__window': [2, 5, 10],
+    'train__min_count': [1, 5, 10],
+    'classify__n_estimators': [10, 50, 100],
+    'classify__max_depth': [5, 10, None]
+}
+
+# Create the grid search object
+grid_search = GridSearchCV(pipeline, param_grid, cv=5)
+
+labels = [1, 0]
+# Fit the grid search object on the sentences
+grid_search.fit(sentences, labels)
+
+# Print the best parameters and score
+print(grid_search.best_params_)
+print(grid_search.best_score_)
