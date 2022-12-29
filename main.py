@@ -400,7 +400,7 @@ batch_size = 500
 batches = [df_new[i:i+batch_size] for i in range(0, len(df_new), batch_size)]
 
 # ThreadPoolExecutor object to run the tasks in parallel
-for i in sample_size:
+for i in range(1, sample_size):
     with concurrent.futures.ThreadPoolExecutor() as executor:
         # tasks submit to executor
         tasks = [executor.submit(process_batch, batch) for batch in batches]
