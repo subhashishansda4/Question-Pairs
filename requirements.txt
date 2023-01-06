@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Jan  6 18:05:50 2023
-
-@author: VAGUE
-"""
-
 streamlit
+sklearn
+nltk
 fuzzywuzzy
+distance
+bs4
