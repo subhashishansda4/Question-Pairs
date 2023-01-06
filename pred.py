@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Dec 19 20:59:01 2022
-
-@author: VAGUE
-"""
-
-
 from gensim.models import Word2Vec
 import numpy as np
 import pickle

@@ -1,19 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Dec 27 18:11:27 2022
-
-@author: VAGUE
-"""
-
-'''
-streamlit
-sklearn
-nltk
-fuzzywuzzy
-distance
-bs4
-'''
-
 import streamlit as st
 import pred
 import pickle

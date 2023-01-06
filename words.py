@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar  3 20:04:07 2022
-
-@author: VAGUE
-"""
-
 import json
 
 # https://raw.githubusercontent.com/matthewreagan/WebstersEnglishDictionary/master/dictionary.json
