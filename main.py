@@ -65,7 +65,7 @@ plt.show()
 
 # --------------------------------------------------
 # sample dataset
-sample_size = 1000
+sample_size = 10000
 df_new = df.sample(sample_size, random_state=0)
 # --------------------------------------------------
 
@@ -353,12 +353,14 @@ def process_batch(x):
     from gensim.models import Word2Vec
     '''from words import words_0'''
     
-    w2v = Word2Vec(words, vector_size=100, window=5, min_count=4, workers=4)
+    w2v = Word2Vec(words, vector_size=100, window=5, min_count=2, workers=4)
+    w2v.build_vocab(words, update=False)
     w2v.train(words, total_examples=len(questions), epochs=10)
+    w2v.save("word2vec.model")
     
     # vectorizer model
     '''cv = CountVectorizer(max_features=3000)'''
-    tf_idf = TfidfVectorizer(max_features=3000)
+    tf_idf = TfidfVectorizer(max_features=1000)
     
     # using word2vec model to transform sentences
     #questions = [q.split() for q in questions]
@@ -380,6 +382,8 @@ def process_batch(x):
     
     
     tf_idf.fit(sample)
+    import pickle
+    pickle.dump(tf_idf, open('tf_idf.pkl', 'wb'))
     q1_arr, q2_arr = np.vsplit(tf_idf.transform(sample).toarray(), 2)
     
     # converting to dataframe and concatenating
@@ -396,18 +400,16 @@ def process_batch(x):
 
 import concurrent.futures
 # input data division into batches
-batch_size = 500
+batch_size = 5000
 batches = [df_new[i:i+batch_size] for i in range(0, len(df_new), batch_size)]
 
 # ThreadPoolExecutor object to run the tasks in parallel
-for i in range(1, sample_size):
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        # tasks submit to executor
-        tasks = [executor.submit(process_batch, batch) for batch in batches]
-        print(i, " done")
-        
-        # iterate over completed tasks and get results
-        results = [task.result() for task in concurrent.futures.as_completed(tasks)]
+with concurrent.futures.ThreadPoolExecutor() as executor:
+    # tasks submit to executor
+    tasks = [executor.submit(process_batch, batch) for batch in batches]
+    
+    # iterate over completed tasks and get results
+    results = [task.result() for task in concurrent.futures.as_completed(tasks)]
 
 final_df = sum(results)
 
@@ -613,7 +615,7 @@ param_grid = {
 }
 param_grid = {}
 
-
+'''
 # cross-validating dataset
 scrs = []
 def cross_val_train():
@@ -658,6 +660,7 @@ print("")
 cross_val_train()
 print(sum(scrs) / len(scrs))
 print("")
+'''
 # --------------------------------------------------
 
     
@@ -680,7 +683,7 @@ grid = GridSearchCV(
     rf,
     param_grid,
     cv=kfold,
-    scoring='neg_log_loss', refit='neg_log_loss'
+    scoring='roc_auc', refit='roc_auc'
 )
 grid.fit(x_train, y_train)
 print(grid.best_params_)
