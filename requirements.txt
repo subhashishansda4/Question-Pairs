@@ -6,8 +6,4 @@ Created on Fri Jan  6 18:05:50 2023
 """
 
 streamlit
-sklearn
-nltk
 fuzzywuzzy
-distance
-bs4
